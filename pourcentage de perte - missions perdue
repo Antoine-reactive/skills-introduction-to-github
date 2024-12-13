@@ -1,0 +1,65 @@
+Pourcentage perte
+WITH TransformedData AS (
+  SELECT 
+    Besoin___message_laiss____,
+    Brief_de_mission,
+    Lettre_de_mission,
+    Short_list,
+    ICM
+  FROM 
+    `reactive-executive-441609.salesforce_test.Bilan_mission_perdue`
+  WHERE 
+    Motif_Perte != 'La mission n\'est pas renseignée sur SF'
+),
+StageLosses AS (
+  SELECT
+    COUNT(*) AS Total_missions,
+    COUNTIF(Besoin___message_laiss____ = 'OUI') AS Besoin_oui,
+    COUNTIF(Brief_de_mission = 'OUI') AS Brief_oui,
+    COUNTIF(Lettre_de_mission = 'OUI') AS Lettre_oui,
+    COUNTIF(Short_list = 'OUI') AS Shortlist_oui,
+    COUNTIF(ICM = 'OUI') AS ICM_oui
+  FROM
+    TransformedData
+)
+SELECT
+  Etape,
+  Pertes_absolues,
+  ROUND((Pertes_absolues * 100.0) / Total_missions, 2) AS Pourcentage_pertes
+FROM (
+  SELECT
+    1 AS Ordre,
+    'Besoin' AS Etape,
+    Total_missions - Besoin_oui AS Pertes_absolues,
+    Total_missions
+  FROM StageLosses
+  UNION ALL
+  SELECT
+    2 AS Ordre,
+    'Brief' AS Etape,
+    Total_missions - Brief_oui AS Pertes_absolues,
+    Total_missions
+  FROM StageLosses
+  UNION ALL
+  SELECT
+    3 AS Ordre,
+    'Lettre de Mission' AS Etape,
+    Brief_oui - Lettre_oui AS Pertes_absolues,
+    Total_missions
+  FROM StageLosses
+  UNION ALL
+  SELECT
+    4 AS Ordre,
+    'Shortlist' AS Etape,
+    Lettre_oui - Shortlist_oui AS Pertes_absolues,
+    Total_missions
+  FROM StageLosses
+  UNION ALL
+  SELECT
+    5 AS Ordre,
+    'ICM' AS Etape,
+    Shortlist_oui - ICM_oui AS Pertes_absolues,
+    Total_missions
+  FROM StageLosses
+)
+ORDER BY Ordre;

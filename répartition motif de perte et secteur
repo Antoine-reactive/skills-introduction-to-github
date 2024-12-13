@@ -1,0 +1,54 @@
+WITH TransformedData AS (
+  SELECT 
+    CASE 
+      WHEN Origine_ IN ('Google', 'Bing') THEN 'SEA'
+      ELSE 'SEO'
+    END AS Type_Origine,
+    Secteur,
+    Motif_Perte
+  FROM 
+    reactive-executive-441609.salesforce_test.Bilan_mission_perdue
+  WHERE 
+    Origine_ IN ('SEO', 'Google', 'Bing')
+)
+/*
+-- Répartition des motifs de perte par origine
+SELECT 
+  Type_Origine,
+  Motif_Perte,
+  COUNT(*) AS Nombre_Missions,
+  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY Type_Origine), 2) AS Pourcentage
+FROM 
+  TransformedData
+GROUP BY 
+  Type_Origine, Motif_Perte
+ORDER BY 
+   Pourcentage DESC, Type_Origine;
+*/
+-- Répartition des motifs de perte par secteur
+SELECT 
+  Secteur,
+  Motif_Perte,
+  COUNT(*) AS Nombre_Missions,
+  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY Secteur), 2) AS Pourcentage
+FROM 
+  TransformedData
+GROUP BY 
+  Secteur, Motif_Perte
+ORDER BY 
+  Secteur, Nombre_Missions DESC;
+/*
+-- Répartition des origines par secteur
+SELECT 
+  Secteur,
+  Type_Origine,
+  COUNT(*) AS Nombre_Missions,
+  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY Secteur), 2) AS Pourcentage
+FROM 
+  TransformedData
+GROUP BY 
+  Secteur, Type_Origine
+ORDER BY 
+  Secteur, Nombre_Missions DESC;
+  
+*/
